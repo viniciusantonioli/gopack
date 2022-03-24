@@ -1,4 +1,4 @@
-module gopack
+module github.com/viniciusantonioli/gopack
 
 go 1.18
 
