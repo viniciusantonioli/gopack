@@ -1,32 +1,51 @@
 package postgres
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
 
-	"github.com/jackc/pgx/v4"
+	_ "github.com/lib/pq"
 )
 
-func Connect(pgConnString string) (*pgx.Conn, error) {
-	conn, err := pgx.Connect(context.Background(), pgConnString)
+func Connect(psqlconn string) (*sql.DB, error) {
+	pg, err := sql.Open("postgres", psqlconn)
 	if err != nil {
-		return nil, fmt.Errorf("Não foi possível conectar a base de dados: %v\n", err)
+		return nil, errorFmt(err)
 	}
-	return conn, nil
+
+	err = pg.Ping()
+	if err != nil {
+		return nil, errorFmt(err)
+	}
+
+	return pg, nil
 }
 
-func Query(conn *pgx.Conn, query string, args ...interface{}) (pgx.Rows, error) {
-	rows, err := conn.Query(context.Background(), query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("Não foi possível executar a query: %v\n", err)
-	}
-	return rows, nil
+func Disconnect(pg *sql.DB) error {
+	err := pg.Close()
+	return err
 }
 
-func Disconnect(conn *pgx.Conn) error {
-	err := conn.Close(context.Background())
-	if err != nil {
-		return fmt.Errorf("Não foi possível desconectar da base de dados: %v\n", err)
-	}
-	return nil
+func Query(pg *sql.DB, query string, args ...interface{}) (*sql.Rows, error) {
+	result, err := pg.Query(query, args...)
+	return result, err
+}
+
+func QueryRow(pg *sql.DB, query string, args ...interface{}) *sql.Row {
+	result := pg.QueryRow(query, args...)
+	return result
+}
+
+func ScanRow(row *sql.Row, dest ...interface{}) error {
+	err := row.Scan(dest...)
+	return err
+}
+
+func ScanRows(rows *sql.Rows, dest ...interface{}) error {
+	err := rows.Scan(dest...)
+	return err
+}
+
+func errorFmt(err error) error {
+	return fmt.Errorf("Falha ao conectar com o banco de dados: %s", err)
 }
