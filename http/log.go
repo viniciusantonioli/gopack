@@ -70,7 +70,7 @@ func Logger(logPath, env string) {
 	log.SetFlags(log.Ldate | log.Ltime)
 }
 
-func LogHandler(handler http.Handler) http.Handler {
+func logHandler(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := ioutil.ReadAll(r.Body)
 		if string(body) != "" {
